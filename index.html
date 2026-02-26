@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SubTrack — Your personal subscription manager" />
+  <meta name="theme-color" content="#007AFF" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="SubTrack" />
+  <title>SubTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+/* ─────────────────────────────────────────────
+       DESIGN TOKENS — iOS-inspired Light Theme
+    ───────────────────────────────────────────── */
+    :root {
+      --bg:          #F2F2F7;
+      --bg-card:     #FFFFFF;
+      --sep:         rgba(60,60,67,0.12);
+      --sep-opaque:  #E5E5EA;
+      --text-1:      #1C1C1E;
+      --text-2:      #3C3C43;
+      --text-3:      #8E8E93;
+      --text-4:      #C7C7CC;
+      --accent:      #007AFF;
+      --accent-bg:   #EBF3FF;
+      --danger:      #FF3B30;
+      --success:     #34C759;
+      --orange:      #FF9500;
+      --nav-h:       56px;
+      --radius:      13px;
+      --radius-sm:   8px;
+      --shadow:      0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.05);
+
+      /* Category colours */
+      --Streaming:    #FF3B30;
+      --Music:        #34C759;
+      --Productivity: #5856D6;
+      --Gaming:       #FF9500;
+      --Cloud:        #007AFF;
+      --Other:        #FF2D55;
+    }
+
+    /* ── RESET ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── UTILITIES ─────────────────────────────── */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      overflow: hidden; clip: rect(0,0,0,0); border: 0;
+    }
+
+    /* ── TAB PANELS ────────────────────────────── */
+    .tab-panel {
+      display: none;
+      padding-bottom: calc(var(--nav-h) + 12px);
+      animation: fadeIn 0.2s ease;
+    }
+    .tab-panel.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── PAGE HEADER ───────────────────────────── */
+    .page-header {
+      padding: 52px 20px 10px;
+    }
+    .page-title {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    /* ── SECTION LABEL ─────────────────────────── */
+    .s-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-3);
+      padding: 18px 20px 6px;
+    }
+
+    /* ── STAT TILES ────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 8px 16px 0;
+    }
+    .stat-tile {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 14px;
+    }
+    .stat-tile__lbl {
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+    .stat-tile__val {
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .stat-tile__val sup {
+      font-size: 0.85rem;
+      font-weight: 600;
+      vertical-align: super;
+      letter-spacing: 0;
+      color: var(--text-3);
+    }
+    .stat-tile__sub { font-size: 0.7rem; color: var(--text-3); margin-top: 5px; }
+    .stat-tile__big {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-tile__big-lbl { font-size: 0.7rem; color: var(--text-3); margin-top: 5px; }
+
+    /* ── iOS CARD ──────────────────────────────── */
+    .ios-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 0 16px;
+      overflow: hidden;
+    }
+
+    /* ── HOLLOW PIE CHART ──────────────────────── */
+    .chart-wrap {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 18px 18px 14px;
+    }
+    .pie-el {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--sep-opaque);
+      transition: background 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pie-el::before {
+      content: "";
+      position: absolute;
+      inset: 22px; /* Controls the donut thickness */
+      background: var(--bg-card);
+      border-radius: 50%;
+    }
+    .pie-el-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .pie-legend {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .leg-row { display: flex; align-items: center; gap: 8px; }
+    .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .leg-name { flex: 1; font-size: 0.76rem; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .leg-amt  { font-size: 0.76rem; font-weight: 600; color: var(--text-1); }
+
+    /* ── LIST ROW (dashboard sub list) ────────── */
+    .list-sep      { height: 1px; background: var(--sep); margin-left: 52px; }
+    .list-sep--full{ margin-left: 0; }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+    }
+    .list-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700;
+      color: #fff; flex-shrink: 0;
+    }
+    .list-body { flex: 1; min-width: 0; }
+    .list-name { font-size: 0.88rem; font-weight: 600; }
+    .list-sub  { font-size: 0.7rem; color: var(--text-3); margin-top: 1px; }
+    .list-amt  { font-size: 0.88rem; font-weight: 600; }
+
+    /* ── UPCOMING BILLS ─────────────────────────── */
+    .bill-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+    }
+    .bill-badge {
+      width: 42px; height: 42px;
+      border-radius: var(--radius-sm);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .bb-urgent { background: rgba(255,59,48,0.1); }
+    .bb-soon   { background: rgba(255,149,0,0.1); }
+    .bb-normal { background: var(--bg); }
+    .bill-badge__num {
+      font-size: 1.1rem; font-weight: 700; line-height: 1;
+    }
+    .bb-urgent .bill-badge__num { color: var(--danger); }
+    .bb-soon   .bill-badge__num { color: var(--orange); }
+    .bb-normal .bill-badge__num { color: var(--text-3); }
+    .bill-badge__lbl {
+      font-size: 0.48rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em; margin-top: 1px;
+    }
+    .bb-urgent .bill-badge__lbl { color: var(--danger); }
+    .bb-soon   .bill-badge__lbl { color: var(--orange); }
+    .bb-normal .bill-badge__lbl { color: var(--text-3); }
+    .bill-info { flex: 1; min-width: 0; }
+    .bill-name { font-size: 0.88rem; font-weight: 600; }
+    .bill-meta { font-size: 0.7rem; color: var(--text-3); margin-top: 2px; }
+    .bill-amt  { font-size: 0.88rem; font-weight: 600; }
+
+    /* ── FAB ─────────────────────────────────── */
+    #fab {
+      position: fixed;
+      bottom: calc(var(--nav-h) + 14px);
+      right: 18px;
+      z-index: 100;
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,122,255,0.38);
+      transition: transform 0.16s ease;
+    }
+    #fab:hover  { transform: scale(1.07); }
+    #fab:active { transform: scale(0.94); }
+    #fab:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+    /* ── BOTTOM NAV ──────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      height: var(--nav-h);
+      background: rgba(249,249,251,0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--sep);
+      display: flex;
+      z-index: 90;
+    }
+    .nav-btn {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px;
+      background: none; border: none;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.58rem; font-weight: 500;
+      color: var(--text-4);
+      padding: 6px 0 10px;
+      transition: color 0.15s;
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn:focus-visible { outline: 2px solid var(--accent); border-radius: 6px; }
+
+    /* ── MODAL SHEET ─────────────────────────── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 200; align-items: flex-end;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    dialog.modal-sheet {
+      display: block; border: none;
+      background: var(--bg);
+      border-radius: 18px 18px 0 0;
+      width: 100%; max-width: 430px;
+      max-height: 93vh; overflow-y: auto;
+      padding: 0; margin: 0;
+      animation: sheetUp 0.28s cubic-bezier(0.32,1,0.64,1) both;
+    }
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--sep-opaque);
+      border-radius: 2px;
+      margin: 10px auto 0;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px 8px;
+    }
+    .modal-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+    .modal-close {
+      width: 27px; height: 27px;
+      border-radius: 50%;
+      background: var(--sep-opaque);
+      border: none; cursor: pointer;
+      color: var(--text-3);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: #D1D1D6; }
+    .modal-close:focus-visible { outline: 2px solid var(--accent); }
+    .modal-body { padding: 0 16px 40px; }
+
+    /* ── FORM ─────────────────────────────────── */
+    .form-s-lbl {
+      font-size: 0.67rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--text-3);
+      padding: 14px 4px 5px;
+    }
+    .form-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .form-field {
+      display: flex; align-items: center;
+      padding: 0 14px; min-height: 44px;
+      border-bottom: 1px solid var(--sep);
+    }
+    .form-field:last-child { border-bottom: none; }
+    .form-lbl {
+      font-size: 0.85rem; font-weight: 500;
+      white-space: nowrap;
+      min-width: 108px;
+      padding-right: 8px;
+    }
+    .form-lbl--req::after { content: ' *'; color: var(--danger); font-size: 0.75rem; }
+    .form-input, .form-select {
+      flex: 1; background: none; border: none; outline: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem; color: var(--text-1);
+      text-align: right; padding: 12px 0; min-width: 0;
+      -webkit-appearance: none;
+    }
+    .form-input::placeholder { color: var(--text-4); }
+    .form-select { cursor: pointer; }
+    .form-select option { background: #fff; }
+    input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.35; cursor: pointer; }
+
+    /* Radio */
+    .radio-grp {
+      display: flex; gap: 8px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 10px;
+    }
+    .r-opt { flex: 1; }
+    .r-opt input { display: none; }
+    .r-lbl {
+      display: flex; align-items: center; justify-content: center;
+      gap: 5px; padding: 9px 6px;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      font-size: 0.8rem; font-weight: 500;
+      color: var(--text-3); cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .r-opt input:checked + .r-lbl { background: var(--accent); color: #fff; }
+    .r-opt input:focus-visible + .r-lbl { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .cond { display: none; animation: fadeIn 0.16s ease; }
+    .cond.show { display: block; }
+
+    .btn-submit {
+      width: 100%; padding: 14px; margin-top: 24px;
+      border-radius: var(--radius);
+      background: var(--accent); color: #fff;
+      border: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.12s;
+    }
+    .btn-submit:hover  { opacity: 0.88; }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+    /* ── SUB CARDS (Subs tab) ───────────────────── */
+    .sub-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 0 16px 10px;
+      overflow: hidden;
+    }
+    .sc-top {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px 12px;
+    }
+    .sc-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.66rem; font-weight: 700;
+      color: #fff; flex-shrink: 0;
+    }
+    .sc-info { flex: 1; min-width: 0; }
+    .sc-name { font-size: 0.94rem; font-weight: 700; }
+    .sc-cycle { font-size: 0.7rem; color: var(--text-3); margin-top: 2px; }
+    .sc-price { text-align: right; flex-shrink: 0; }
+    .sc-price__amt    { font-size: 1rem; font-weight: 700; }
+    .sc-price__period { font-size: 0.64rem; color: var(--text-3); }
+
+    .sc-meta {
+      border-top: 1px solid var(--sep);
+      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px 0;
+    }
+    .sc-meta-item { display: flex; align-items: center; gap: 6px; }
+    .sc-meta-icon { color: var(--text-4); flex-shrink: 0; }
+    .sc-meta-txt  { font-size: 0.74rem; color: var(--text-2); }
+
+    .sc-footer {
+      border-top: 1px solid var(--sep);
+      padding: 8px 16px;
+      display: flex; justify-content: flex-end;
+      gap: 8px;
+    }
+    .btn-edit {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 14px;
+      border-radius: 50px;
+      background: var(--accent-bg); border: none;
+      color: var(--accent);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.76rem; font-weight: 600;
+      cursor: pointer; transition: background 0.14s;
+    }
+    .btn-edit:hover { background: #d6e9ff; }
+    .btn-edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .btn-delete {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 14px;
+      border-radius: 50px;
+      background: rgba(255,59,48,0.1); border: none;
+      color: var(--danger);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.76rem; font-weight: 600;
+      cursor: pointer; transition: background 0.14s;
+    }
+    .btn-delete:hover { background: rgba(255,59,48,0.2); }
+    .btn-delete:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+
+    /* ── PROFILE ──────────────────────────────── */
+    .profile-top {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 36px 20px 20px;
+    }
+    .avatar {
+      width: 74px; height: 74px; border-radius: 50%;
+      background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.45rem; font-weight: 700; color: #fff;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(0,122,255,0.22);
+    }
+    .p-name  { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+    .p-email { font-size: 0.78rem; color: var(--text-3); margin-top: 2px; }
+    .badge-free {
+      margin-top: 10px;
+      background: var(--bg); border: 1px solid var(--sep-opaque);
+      border-radius: 50px; padding: 3px 12px;
+      font-size: 0.68rem; font-weight: 600; color: var(--text-3);
+    }
+    .stats-strip {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      background: var(--bg-card);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      margin: 0 16px; overflow: hidden;
+    }
+    .strip-cell {
+      padding: 13px 10px; text-align: center;
+      border-right: 1px solid var(--sep);
+    }
+    .strip-cell:last-child { border-right: none; }
+    .strip-val { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.03em; color: var(--accent); }
+    .strip-lbl { font-size: 0.63rem; color: var(--text-3); margin-top: 3px; }
+
+    .settings-card {
+      background: var(--bg-card); border-radius: var(--radius);
+      box-shadow: var(--shadow); margin: 0 16px; overflow: hidden;
+    }
+    .s-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--sep);
+    }
+    .s-row:last-child { border-bottom: none; }
+    .s-row__lbl { font-size: 0.88rem; font-weight: 500; }
+    .s-row__sub { font-size: 0.7rem; color: var(--text-3); margin-top: 1px; }
+    .s-row__r   { flex-shrink: 0; margin-left: 16px; }
+
+    /* iOS toggle */
+    .ios-toggle { position: relative; width: 50px; height: 30px; }
+    .ios-toggle input { display: none; }
+    .ios-track {
+      position: absolute; inset: 0;
+      background: #D1D1D6; border-radius: 15px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .ios-thumb {
+      position: absolute;
+      width: 26px; height: 26px;
+      background: #fff; border-radius: 50%;
+      top: 2px; left: 2px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .ios-toggle input:checked ~ .ios-track { background: var(--success); }
+    .ios-toggle input:checked ~ .ios-track .ios-thumb { transform: translateX(20px); }
+    .ios-toggle input:focus-visible ~ .ios-track { outline: 2px solid var(--accent); }
+    .settings-sel {
+      background: none; border: none; outline: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.82rem; color: var(--accent); font-weight: 500;
+      cursor: pointer; -webkit-appearance: none;
+    }
+
+    /* ── EMPTY STATE ─────────────────────────── */
+    .empty {
+      text-align: center; padding: 32px 16px; color: var(--text-3);
+    }
+    .empty__icon { font-size: 1.8rem; margin-bottom: 8px; opacity: 0.45; }
+    .empty__txt  { font-size: 0.8rem; line-height: 1.5; }
+
+    /* ── TOAST ───────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--nav-h) + 68px);
+      left: 50%; transform: translateX(-50%) translateY(6px);
+      background: rgba(28,28,30,0.9);
+      color: #fff;
+      font-size: 0.78rem; font-weight: 500;
+      padding: 8px 20px;
+      border-radius: 20px;
+      opacity: 0; pointer-events: none; z-index: 300;
+      white-space: nowrap;
+      backdrop-filter: blur(10px);
+      transition: opacity 0.22s, transform 0.22s;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Scrollbar hidden */
+    ::-webkit-scrollbar { display: none; }
+    * { scrollbar-width: none; }
+
+    /* ══════════════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════════════ */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    #login-screen.hidden {
+      animation: loginOut 0.35s ease forwards;
+      pointer-events: none;
+    }
+    @keyframes loginOut {
+      to { opacity: 0; transform: scale(0.97); }
+    }
+
+    .login-logo {
+      display: flex; flex-direction: column; align-items: center;
+      margin-bottom: 32px;
+    }
+    .login-logo-icon {
+      width: 68px; height: 68px;
+      background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(0,122,255,0.28);
+      margin-bottom: 14px;
+    }
+    .login-logo-title {
+      font-size: 1.7rem; font-weight: 700; letter-spacing: -0.04em;
+    }
+    .login-logo-sub {
+      font-size: 0.78rem; color: var(--text-3); margin-top: 3px;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08);
+      width: 100%; max-width: 390px;
+      overflow: hidden;
+    }
+    .login-tabs {
+      display: flex; border-bottom: 1px solid var(--sep);
+    }
+    .login-tab {
+      flex: 1; padding: 14px; text-align: center;
+      font-size: 0.88rem; font-weight: 600;
+      color: var(--text-3); cursor: pointer;
+      border: none; background: none;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .login-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .login-form { padding: 20px; }
+    .login-field {
+      margin-bottom: 12px;
+    }
+    .login-field-label {
+      font-size: 0.72rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-3); margin-bottom: 6px; display: block;
+    }
+    .login-input {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg);
+      border: 1.5px solid var(--sep-opaque);
+      border-radius: var(--radius-sm);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 0.92rem; color: var(--text-1);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .login-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+    }
+    .login-input.error { border-color: var(--danger); }
+    .login-error {
+      font-size: 0.72rem; color: var(--danger);
+      margin-top: 3px; display: none;
+    }
+    .login-error.show { display: block; }
+
+    .login-btn {
+      width: 100%; padding: 14px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+      transition: opacity 0.15s, transform 0.12s;
+      position: relative; overflow: hidden;
+    }
+    .login-btn:hover { opacity: 0.9; }
+    .login-btn:active { transform: scale(0.98); }
+    .login-btn.loading { pointer-events: none; }
+    .login-btn.loading::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .login-divider {
+      text-align: center; font-size: 0.72rem; color: var(--text-4);
+      margin: 14px 0;
+    }
+    .login-note {
+      text-align: center; font-size: 0.7rem; color: var(--text-3);
+      margin-top: 16px; line-height: 1.5;
+    }
+
+    /* Password strength */
+    .pw-strength {
+      display: flex; gap: 4px; margin-top: 6px;
+    }
+    .pw-bar {
+      flex: 1; height: 3px; border-radius: 2px;
+      background: var(--sep-opaque);
+      transition: background 0.2s;
+    }
+    .pw-bar.weak   { background: var(--danger); }
+    .pw-bar.medium { background: var(--orange); }
+    .pw-bar.strong { background: var(--success); }
+
+    /* ── CONFIRM MODAL ─────────────────────────── */
+    #confirm-modal {
+      display: none;
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.3);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    #confirm-modal.open { display: flex; }
+    .confirm-box {
+      background: var(--bg-card);
+      border-radius: 18px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      width: 100%; max-width: 320px;
+      overflow: hidden;
+      animation: confirmIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes confirmIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .confirm-header { padding: 22px 20px 0; text-align: center; }
+    .confirm-icon { font-size: 2rem; margin-bottom: 8px; }
+    .confirm-title { font-size: 1.05rem; font-weight: 700; }
+    .confirm-msg { font-size: 0.82rem; color: var(--text-3); margin-top: 6px; line-height: 1.5; }
+    .confirm-actions {
+      display: flex; border-top: 1px solid var(--sep);
+      margin-top: 20px;
+    }
+    .confirm-btn {
+      flex: 1; padding: 15px 8px;
+      border: none; background: none;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: background 0.14s;
+    }
+    .confirm-btn:hover { background: var(--bg); }
+    .confirm-btn:first-child { color: var(--text-3); border-right: 1px solid var(--sep); }
+    .confirm-btn.danger { color: var(--danger); }
+    .confirm-btn.primary { color: var(--accent); }
+
+    /* ── NOTIFICATION PERMISSION BANNER ─────────── */
+    #notif-banner {
+      display: none;
+      background: var(--accent);
+      color: #fff;
+      padding: 12px 16px;
+      margin: 0 16px 12px;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      align-items: center;
+      gap: 10px;
+      animation: fadeIn 0.3s ease;
+    }
+    #notif-banner.show { display: flex; }
+    #notif-banner-text { flex: 1; line-height: 1.4; }
+    #notif-banner-allow {
+      background: rgba(255,255,255,0.25);
+      border: none; color: #fff;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 0.78rem; font-weight: 600;
+      padding: 6px 12px; border-radius: 50px;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.14s;
+    }
+    #notif-banner-allow:hover { background: rgba(255,255,255,0.35); }
+    #notif-banner-dismiss {
+      background: none; border: none;
+      color: rgba(255,255,255,0.7); cursor: pointer;
+      font-size: 1rem; padding: 2px;
+    }
+
+    /* ── PWA INSTALL PROMPT ──────────────────────── */
+    #install-banner {
+      display: none;
+      background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+      color: #fff;
+      padding: 14px 16px;
+      margin: 12px 16px 0;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      align-items: center; gap: 10px;
+    }
+    #install-banner.show { display: flex; }
+    #install-banner .ib-text { flex: 1; }
+    #install-banner .ib-title { font-weight: 700; font-size: 0.85rem; }
+    #install-banner .ib-sub { font-size: 0.72rem; opacity: 0.85; margin-top: 2px; }
+    #install-banner .ib-btn {
+      background: rgba(255,255,255,0.25);
+      border: none; color: #fff;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 0.78rem; font-weight: 600;
+      padding: 7px 14px; border-radius: 50px; cursor: pointer;
+      transition: background 0.14s; white-space: nowrap;
+    }
+    #install-banner .ib-btn:hover { background: rgba(255,255,255,0.38); }
+    #install-banner .ib-dismiss {
+      background: none; border: none; color: rgba(255,255,255,0.7);
+      cursor: pointer; font-size: 1rem; padding: 2px;
+    }
+
+    /* ── SEARCH BAR ──────────────────────────────── */
+    .search-wrap {
+      padding: 8px 16px 4px;
+      position: relative;
+    }
+    .search-input {
+      width: 100%;
+      padding: 9px 14px 9px 36px;
+      background: var(--bg-card);
+      border: none; outline: none;
+      border-radius: var(--radius-sm);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 0.85rem; color: var(--text-1);
+      box-shadow: var(--shadow);
+    }
+    .search-input::placeholder { color: var(--text-4); }
+    .search-icon {
+      position: absolute; left: 28px; top: 50%;
+      transform: translateY(-50%); color: var(--text-3);
+      pointer-events: none;
+    }
+
+    /* ── SORT BAR ─────────────────────────────────── */
+    .sort-bar {
+      display: flex; gap: 6px; padding: 6px 16px 8px;
+      overflow-x: auto;
+    }
+    .sort-chip {
+      display: flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 50px;
+      border: none; cursor: pointer; white-space: nowrap;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 0.72rem; font-weight: 500;
+      background: var(--bg-card); color: var(--text-2);
+      box-shadow: var(--shadow);
+      transition: all 0.15s;
+    }
+    .sort-chip.active { background: var(--accent); color: #fff; }
+
+    /* ── PAGE HEADER WITH GREETING ───────────────── */
+    .greeting { font-size: 0.82rem; color: var(--text-3); font-weight: 400; margin-bottom: 2px; }
+
+    /* ── LOADING SPINNER ─────────────────────────── */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-logo">
+    <div class="login-logo-icon">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <rect x="4" y="8" width="26" height="18" rx="3" stroke="#fff" stroke-width="2.2"/>
+        <path d="M4 13h26" stroke="#fff" stroke-width="2.2"/>
+        <circle cx="10" cy="19" r="2" fill="#fff" opacity=".7"/>
+        <rect x="16" y="17.5" width="8" height="3" rx="1.5" fill="#fff" opacity=".7"/>
+      </svg>
+    </div>
+    <div class="login-logo-title">SubTrack</div>
+    <div class="login-logo-sub">Your personal subscription manager</div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-tabs">
+      <button class="login-tab active" id="tab-signin" onclick="switchLoginTab('signin')">Sign In</button>
+      <button class="login-tab" id="tab-signup" onclick="switchLoginTab('signup')">Create Account</button>
+    </div>
+
+    <!-- SIGN IN FORM -->
+    <div class="login-form" id="form-signin">
+      <div class="login-field">
+        <label class="login-field-label" for="si-email">Email</label>
+        <input class="login-input" type="email" id="si-email" placeholder="you@email.com" autocomplete="email" />
+      </div>
+      <div class="login-field">
+        <label class="login-field-label" for="si-pass">Password</label>
+        <input class="login-input" type="password" id="si-pass" placeholder="Enter your password" autocomplete="current-password" />
+        <div class="login-error" id="si-error">Incorrect email or password</div>
+      </div>
+      <button class="login-btn" id="si-btn" onclick="handleSignIn()">Sign In</button>
+      <div class="login-note">Your data stays on your device.<br>No servers, 100% private.</div>
+    </div>
+
+    <!-- SIGN UP FORM -->
+    <div class="login-form" id="form-signup" style="display:none;">
+      <div class="login-field">
+        <label class="login-field-label" for="su-name">Full Name</label>
+        <input class="login-input" type="text" id="su-name" placeholder="Your name" autocomplete="name" />
+        <div class="login-error" id="su-name-error">Please enter your name</div>
+      </div>
+      <div class="login-field">
+        <label class="login-field-label" for="su-email">Email</label>
+        <input class="login-input" type="email" id="su-email" placeholder="you@email.com" autocomplete="email" />
+        <div class="login-error" id="su-email-error">Please enter a valid email</div>
+      </div>
+      <div class="login-field">
+        <label class="login-field-label" for="su-pass">Password</label>
+        <input class="login-input" type="password" id="su-pass" placeholder="Choose a password" autocomplete="new-password" oninput="checkPwStrength(this.value)" />
+        <div class="pw-strength" id="pw-strength">
+          <div class="pw-bar" id="pw-b1"></div>
+          <div class="pw-bar" id="pw-b2"></div>
+          <div class="pw-bar" id="pw-b3"></div>
+        </div>
+        <div class="login-error" id="su-pass-error">Password must be at least 6 characters</div>
+      </div>
+      <button class="login-btn" id="su-btn" onclick="handleSignUp()">Create Account</button>
+      <div class="login-note">Your data stays on your device.<br>No servers, 100% private.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN APP (hidden until logged in)
+════════════════════════════════════════ -->
+<div id="app" style="display:none;">
+
+<div id="app">
+
+  <main id="panel-dashboard" class="tab-panel active" role="main" aria-labelledby="tab-dashboard">
+
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+    </div>
+
+    <section aria-label="Spending summary">
+      <div class="stats-grid">
+        <div class="stat-tile">
+          <div class="stat-tile__lbl">Total Cost / Month</div>
+          <div class="stat-tile__val"><sup>₹</sup><span id="dash-mo-val">0</span></div>
+          <div class="stat-tile__sub" id="dash-yr-val">₹0 / year</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="s-label">Expense Breakdown</div>
+    <div class="ios-card">
+      <div class="chart-wrap">
+        <div class="pie-el" id="pie-chart" role="img" aria-label="Subscription expense pie chart"></div>
+        <div class="pie-legend" id="pie-legend" aria-label="Category legend">
+          <div class="empty__txt" style="font-size:.74rem;color:var(--text-3);">Add subscriptions<br>to see breakdown</div>
+        </div>
+      </div>
+      <div id="dash-rows"></div>
+    </div>
+
+    <div class="s-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:20px;">
+      <span>Next 15 Days</span>
+      <span id="due-count" style="font-size:.7rem;color:var(--text-3);text-transform:none;letter-spacing:0;font-weight:400;"></span>
+    </div>
+    <div class="ios-card" id="upcoming-card">
+      <div class="empty">
+        <div class="empty__icon">🗓️</div>
+        <div class="empty__txt">No bills due in the next 15 days</div>
+      </div>
+    </div>
+    <div style="height:6px;"></div>
+  </main>
+
+  <section id="panel-subs" class="tab-panel" role="region" aria-labelledby="tab-subs" aria-label="All subscriptions">
+    <div class="page-header" style="display:flex;align-items:baseline;justify-content:space-between;">
+      <div class="page-title">Subscriptions</div>
+      </div>
+    <div id="subs-list" style="padding-top:2px;"></div>
+  </section>
+
+  <section id="panel-profile" class="tab-panel" role="region" aria-labelledby="tab-profile" aria-label="User profile">
+    <div class="profile-top">
+      <div class="avatar" id="profile-avatar" role="img" aria-label="User avatar">?</div>
+      <div class="p-name" id="profile-name">User</div>
+      <div class="p-email" id="profile-email">user@email.com</div>
+      <span class="badge-free">Free Plan</span>
+    </div>
+
+    <div class="stats-strip" role="region" aria-label="Spending overview">
+      <div class="strip-cell">
+        <div class="strip-val" id="p-count">0</div>
+        <div class="strip-lbl">Subs</div>
+      </div>
+      <div class="strip-cell">
+        <div class="strip-val" id="p-mo">₹0</div>
+        <div class="strip-lbl">/ month</div>
+      </div>
+      <div class="strip-cell">
+        <div class="strip-val" id="p-yr">₹0</div>
+        <div class="strip-lbl">/ year</div>
+      </div>
+    </div>
+
+    <div class="s-label">Notifications</div>
+    <div class="settings-card" role="group" aria-label="Notification settings">
+      <div class="s-row">
+        <div>
+          <div class="s-row__lbl">Push Notifications</div>
+          <div class="s-row__sub">Alerts for upcoming bills</div>
+        </div>
+        <div class="s-row__r">
+          <label class="ios-toggle" aria-label="Toggle push notifications">
+            <input type="checkbox" id="push-toggle" checked />
+            <span class="ios-track"><span class="ios-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+      <div class="s-row">
+        <div>
+          <div class="s-row__lbl">Remind Me</div>
+          <div class="s-row__sub">Before billing date</div>
+        </div>
+        <div class="s-row__r">
+          <select class="settings-sel" id="reminder-sel" aria-label="Reminder timing">
+            <option value="1">1 day before</option>
+            <option value="3" selected>3 days before</option>
+            <option value="0">On billing day</option>
+          </select>
+        </div>
+      </div>
+      <div class="s-row">
+        <div>
+          <div class="s-row__lbl">Email Digest</div>
+          <div class="s-row__sub">Weekly spending summary</div>
+        </div>
+        <div class="s-row__r">
+          <label class="ios-toggle" aria-label="Toggle email digest">
+            <input type="checkbox" id="email-toggle" />
+            <span class="ios-track"><span class="ios-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="s-label">Account</div>
+    <div class="settings-card">
+      <div class="s-row">
+        <div class="s-row__lbl">Currency</div>
+        <div style="font-size:.84rem;color:var(--text-3);">Indian Rupee (₹)</div>
+      </div>
+      <div class="s-row" style="cursor:pointer;" id="export-csv-btn" onclick="exportCSV()">
+        <div class="s-row__lbl">Export Data</div>
+        <div style="font-size:.84rem;color:var(--accent);font-weight:600;">Export CSV ↓</div>
+      </div>
+      <div class="s-row" style="cursor:pointer;" id="sign-out-btn" onclick="handleSignOut()">
+        <div class="s-row__lbl" style="color:var(--danger);">Sign Out</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:.67rem;color:var(--text-4);padding:20px 0 6px;">SubTrack v1.0 · Made with ♥</p>
+  </section>
+
+  <button id="fab" aria-label="Add new subscription">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 3v14M3 10h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <button class="nav-btn active" id="tab-dashboard" data-tab="dashboard" role="tab" aria-selected="true" aria-controls="panel-dashboard">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/>
+        <rect x="12" y="2" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/>
+        <rect x="2" y="12" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/>
+        <rect x="12" y="12" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/>
+      </svg>
+      Dashboard
+    </button>
+    <button class="nav-btn" id="tab-subs" data-tab="subs" role="tab" aria-selected="false" aria-controls="panel-subs">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M3 6h16M3 11h11M3 16h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Subs
+    </button>
+    <button class="nav-btn" id="tab-profile" data-tab="profile" role="tab" aria-selected="false" aria-controls="panel-profile">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <circle cx="11" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M3.5 19c0-3.866 3.358-7 7.5-7s7.5 3.134 7.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Profile
+    </button>
+  </nav>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" aria-hidden="true">
+  <dialog class="modal-sheet" id="add-modal" aria-modal="true" aria-labelledby="modal-title" open>
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-title">New Subscription</h2>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+          <path d="M1 1l9 9M10 1L1 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="add-form" novalidate>
+
+        <div class="form-s-lbl">General</div>
+        <div class="form-card">
+          <div class="form-field">
+            <label class="form-lbl form-lbl--req" for="f-name">Name</label>
+            <input class="form-input" type="text" id="f-name" placeholder="Netflix, Spotify…" required autocomplete="off"/>
+          </div>
+          <div class="form-field">
+            <label class="form-lbl" for="f-url">Website</label>
+            <input class="form-input" type="url" id="f-url" placeholder="https://… (optional)"/>
+          </div>
+          <div class="form-field">
+            <label class="form-lbl" for="f-cat">Category</label>
+            <select class="form-select" id="f-cat">
+              <option value="Streaming">Streaming</option>
+              <option value="Music">Music</option>
+              <option value="Productivity">Productivity</option>
+              <option value="Gaming">Gaming</option>
+              <option value="Cloud">Cloud</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-s-lbl">Billing</div>
+        <div class="form-card">
+          <div class="form-field">
+            <label class="form-lbl form-lbl--req" for="f-cost">Amount (₹)</label>
+            <input class="form-input" type="number" id="f-cost" placeholder="0.00" min="0" step="0.01" required/>
+          </div>
+          <div class="form-field">
+            <label class="form-lbl" for="f-cycle">Billing Cycle</label>
+            <select class="form-select" id="f-cycle">
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-lbl form-lbl--req" for="f-date">Payment Date</label>
+            <input class="form-input" type="date" id="f-date" required/>
+          </div>
+        </div>
+
+        <div class="form-s-lbl">Payment Method</div>
+        <div class="radio-grp" role="radiogroup" aria-label="Payment method">
+          <div class="r-opt">
+            <input type="radio" id="r-card" name="pay-mode" value="Credit Card" checked/>
+            <label class="r-lbl" for="r-card">
+              <svg width="13" height="10" viewBox="0 0 13 10" fill="none" aria-hidden="true">
+                <rect x=".75" y=".75" width="11.5" height="8.5" rx="1.25" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M.75 3.5h11.5" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+              Credit Card
+            </label>
+          </div>
+          <div class="r-opt">
+            <input type="radio" id="r-bank" name="pay-mode" value="Bank"/>
+            <label class="r-lbl" for="r-bank">
+              <svg width="13" height="12" viewBox="0 0 13 12" fill="none" aria-hidden="true">
+                <path d="M1 4L6.5 1.5 12 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                <path d="M1 10.5h11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                <rect x="2" y="4" width="1.5" height="6.5" rx=".4" fill="currentColor"/>
+                <rect x="5.75" y="4" width="1.5" height="6.5" rx=".4" fill="currentColor"/>
+                <rect x="9.5" y="4" width="1.5" height="6.5" rx=".4" fill="currentColor"/>
+              </svg>
+              Bank
+            </label>
+          </div>
+        </div>
+
+        <div class="cond show" id="cond-card">
+          <div class="form-card" style="margin-top:8px;">
+            <div class="form-field">
+              <label class="form-lbl" for="f-ch">Name on Card</label>
+              <input class="form-input" type="text" id="f-ch" placeholder="Full name"/>
+            </div>
+            <div class="form-field">
+              <label class="form-lbl" for="f-ci">Card Issuer</label>
+              <input class="form-input" type="text" id="f-ci" placeholder="HDFC, ICICI… (optional)"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="cond" id="cond-bank">
+          <div class="form-card" style="margin-top:8px;">
+            <div class="form-field">
+              <label class="form-lbl" for="f-an">Name on Account</label>
+              <input class="form-input" type="text" id="f-an" placeholder="Full name"/>
+            </div>
+            <div class="form-field">
+              <label class="form-lbl" for="f-bn">Bank Name</label>
+              <input class="form-input" type="text" id="f-bn" placeholder="SBI, HDFC… (optional)"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card" style="margin-top:8px;">
+          <div class="form-field">
+            <label class="form-lbl" for="f-app">App Used</label>
+            <input class="form-input" type="text" id="f-app" placeholder="GPay, Paytm, PhonePe…"/>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Add Subscription</button>
+      </form>
+    </div>
+  </dialog>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     CUSTOM CONFIRM MODAL
+════════════════════════════════════════ -->
+<div id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="confirm-box">
+    <div class="confirm-header">
+      <div class="confirm-icon" id="confirm-icon">🗑️</div>
+      <div class="confirm-title" id="confirm-title">Delete Subscription?</div>
+      <div class="confirm-msg" id="confirm-msg">This will permanently remove this subscription.</div>
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-btn" onclick="closeConfirm(false)">Cancel</button>
+      <button class="confirm-btn danger" id="confirm-ok" onclick="closeConfirm(true)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   AUTH SYSTEM
+═══════════════════════════════════════════════════════ */
+const AUTH_KEY  = 'subtrack_auth_v1';
+const USER_KEY  = 'subtrack_user_v1';
+
+function simpleHash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  }
+  return h.toString(36);
+}
+
+function getAuthStore() {
+  try { return JSON.parse(localStorage.getItem(AUTH_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveAuthStore(data) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify(data));
+}
+
+function switchLoginTab(tab) {
+  document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('form-signin').style.display = tab === 'signin' ? '' : 'none';
+  document.getElementById('form-signup').style.display = tab === 'signup' ? '' : 'none';
+  clearLoginErrors();
+}
+
+function clearLoginErrors() {
+  document.querySelectorAll('.login-error').forEach(el => el.classList.remove('show'));
+  document.querySelectorAll('.login-input').forEach(el => el.classList.remove('error'));
+}
+
+function setError(inputId, errId) {
+  document.getElementById(inputId).classList.add('error');
+  document.getElementById(errId).classList.add('show');
+  document.getElementById(inputId).focus();
+}
+
+function checkPwStrength(pw) {
+  const bars = [document.getElementById('pw-b1'), document.getElementById('pw-b2'), document.getElementById('pw-b3')];
+  bars.forEach(b => b.className = 'pw-bar');
+  if (pw.length >= 6) bars[0].classList.add(pw.length >= 10 ? 'strong' : 'medium');
+  if (pw.length >= 8) bars[1].classList.add(pw.match(/[0-9]/) || pw.match(/[^a-zA-Z0-9]/) ? 'strong' : 'medium');
+  if (pw.length >= 10 && (pw.match(/[A-Z]/) || pw.match(/[^a-zA-Z0-9]/))) bars[2].classList.add('strong');
+}
+
+function handleSignIn() {
+  clearLoginErrors();
+  const email = document.getElementById('si-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('si-pass').value;
+  const store = getAuthStore();
+
+  if (!store[email] || store[email].hash !== simpleHash(pass)) {
+    document.getElementById('si-error').classList.add('show');
+    document.getElementById('si-pass').classList.add('error');
+    document.getElementById('si-pass').focus();
+    // Shake animation
+    document.querySelector('#form-signin').style.animation = 'shake 0.35s ease';
+    setTimeout(() => document.querySelector('#form-signin').style.animation = '', 400);
+    return;
+  }
+
+  localStorage.setItem(USER_KEY, JSON.stringify({ email, name: store[email].name }));
+  launchApp(store[email].name, email);
+}
+
+function handleSignUp() {
+  clearLoginErrors();
+  const name  = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('su-pass').value;
+
+  let valid = true;
+  if (!name) { setError('su-name', 'su-name-error'); valid = false; }
+  if (!email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) { setError('su-email', 'su-email-error'); valid = false; }
+  if (pass.length < 6) { setError('su-pass', 'su-pass-error'); valid = false; }
+  if (!valid) return;
+
+  const store = getAuthStore();
+  // Create or overwrite account
+  store[email] = { name, hash: simpleHash(pass) };
+  saveAuthStore(store);
+  localStorage.setItem(USER_KEY, JSON.stringify({ email, name }));
+  launchApp(name, email);
+}
+
+function launchApp(name, email) {
+  const loginEl = document.getElementById('login-screen');
+  loginEl.classList.add('hidden');
+  setTimeout(() => {
+    loginEl.style.display = 'none';
+    document.getElementById('app').style.display = '';
+    initApp(name, email);
+  }, 350);
+}
+
+function handleSignOut() {
+  openConfirm({
+    icon: '👋',
+    title: 'Sign Out?',
+    msg: 'You will be signed out of SubTrack.',
+    btnText: 'Sign Out',
+    btnClass: 'primary',
+    onConfirm: () => {
+      localStorage.removeItem(USER_KEY);
+      location.reload();
+    }
+  });
+}
+
+// Auto-login if session exists
+(function checkSession() {
+  try {
+    const user = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+    if (user && user.email && user.name) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = '';
+      // Small delay to let DOM render
+      setTimeout(() => initApp(user.name, user.email), 0);
+    }
+  } catch(e) {}
+})();
+
+// Enter key support on login inputs
+document.getElementById('si-email').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('si-pass').focus(); });
+document.getElementById('si-pass').addEventListener('keydown', e => { if(e.key==='Enter') handleSignIn(); });
+document.getElementById('su-name').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('su-email').focus(); });
+document.getElementById('su-email').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('su-pass').focus(); });
+document.getElementById('su-pass').addEventListener('keydown', e => { if(e.key==='Enter') handleSignUp(); });
+
+// Shake animation for failed login
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }';
+document.head.appendChild(shakeStyle);
+
+/* ═══════════════════════════════════════════════════════
+   CONFIRM MODAL
+═══════════════════════════════════════════════════════ */
+let confirmCallback = null;
+
+function openConfirm({ icon = '🗑️', title = 'Are you sure?', msg = '', btnText = 'Confirm', btnClass = 'danger', onConfirm }) {
+  document.getElementById('confirm-icon').textContent = icon;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  const okBtn = document.getElementById('confirm-ok');
+  okBtn.textContent = btnText;
+  okBtn.className = 'confirm-btn ' + btnClass;
+  confirmCallback = onConfirm;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function closeConfirm(confirmed) {
+  document.getElementById('confirm-modal').classList.remove('open');
+  if (confirmed && confirmCallback) confirmCallback();
+  confirmCallback = null;
+}
+
+document.getElementById('confirm-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirm-modal')) closeConfirm(false);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('confirm-modal').classList.contains('open')) closeConfirm(false);
+});
+
+/* ═══════════════════════════════════════════════════════
+   MAIN APP INIT
+═══════════════════════════════════════════════════════ */
+function initApp(name, email) {
+  // Update profile section
+  const initStr = getInitials(name);
+  const avatarEl = document.getElementById('profile-avatar');
+  const nameEl   = document.getElementById('profile-name');
+  const emailEl  = document.getElementById('profile-email');
+  if (avatarEl) { avatarEl.textContent = initStr; avatarEl.setAttribute('aria-label', name + ' avatar'); }
+  if (nameEl)   nameEl.textContent = name;
+  if (emailEl)  emailEl.textContent = email;
+
+  // Update greeting
+  updateGreeting(name);
+
+  // Render the app
+  render();
+
+  // Setup SW + notifications
+  initServiceWorker();
+
+  // Check notification permission state
+  checkNotifPermission();
+
+  // PWA install prompt
+  setupInstallPrompt();
+
+  // Notification toggle wiring
+  document.getElementById('push-toggle').addEventListener('change', function() {
+    if (this.checked) {
+      requestNotifPermission();
+    } else {
+      showToast('Notifications disabled');
+    }
+  });
+
+  // Reminder selector
+  document.getElementById('reminder-sel').addEventListener('change', function() {
+    syncToSW();
+    showToast('Reminder updated');
+  });
+
+  // Export CSV wiring (already has onclick, but extra safety)
+}
+
+function getInitials(name) {
+  const words = name.trim().split(/\s+/);
+  return words.length >= 2 ? (words[0][0] + words[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+}
+
+function updateGreeting(name) {
+  const headerEl = document.querySelector('#panel-dashboard .page-header');
+  if (!headerEl) return;
+  const hr = new Date().getHours();
+  const greet = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+  const firstName = name.split(' ')[0];
+  headerEl.innerHTML = `
+    <div class="greeting">${greet}, ${firstName} 👋</div>
+    <div class="page-title">Dashboard</div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SERVICE WORKER + NOTIFICATIONS
+═══════════════════════════════════════════════════════ */
+let swRegistration = null;
+
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    swRegistration = await navigator.serviceWorker.register('./sw.js');
+    console.log('[SubTrack] SW registered');
+
+    // Register periodic sync if supported
+    if ('periodicSync' in swRegistration) {
+      const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+      if (status.state === 'granted') {
+        await swRegistration.periodicSync.register('check-bills', { minInterval: 24 * 60 * 60 * 1000 });
+        console.log('[SubTrack] Periodic sync registered');
+      }
+    }
+
+    // Sync subs to SW
+    syncToSW();
+  } catch(e) {
+    console.warn('[SubTrack] SW registration failed:', e);
+  }
+}
+
+function syncToSW() {
+  if (!swRegistration || !swRegistration.active) return;
+  const user = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+  const rd = parseInt(document.getElementById('reminder-sel').value, 10) || 3;
+  swRegistration.active.postMessage({
+    type: 'SYNC_SUBS',
+    subs: subs,
+    reminderDays: rd,
+    userName: user.name || ''
+  });
+}
+
+function checkNotifPermission() {
+  if (!('Notification' in window)) return;
+  const toggle = document.getElementById('push-toggle');
+
+  if (Notification.permission === 'granted') {
+    toggle.checked = true;
+    // Show banner only if never seen
+    if (!localStorage.getItem('subtrack_notif_seen')) {
+      localStorage.setItem('subtrack_notif_seen', '1');
+    }
+  } else if (Notification.permission === 'default') {
+    toggle.checked = false;
+    // Show banner prompting user to enable
+    showNotifBanner();
+  } else {
+    // Denied
+    toggle.checked = false;
+  }
+}
+
+function showNotifBanner() {
+  const banner = document.getElementById('notif-banner');
+  if (!banner || localStorage.getItem('subtrack_notif_dismissed')) return;
+  banner.classList.add('show');
+}
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    showToast('Notifications not supported in this browser');
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    const toggle = document.getElementById('push-toggle');
+    if (perm === 'granted') {
+      toggle.checked = true;
+      document.getElementById('notif-banner').classList.remove('show');
+      localStorage.setItem('subtrack_notif_seen', '1');
+      showToast('Notifications enabled ✓');
+      syncToSW();
+      // Send a test notification
+      setTimeout(() => {
+        new Notification('✅ SubTrack Notifications Active', {
+          body: 'You will be reminded about upcoming bills.',
+        });
+      }, 800);
+    } else {
+      toggle.checked = false;
+      showToast('Notifications blocked by browser');
+    }
+  });
+}
+
+/* ── PWA Install Prompt ─────────────────────────────── */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const banner = document.getElementById('install-banner');
+  if (banner && !localStorage.getItem('subtrack_install_dismissed')) {
+    banner.classList.add('show');
+  }
+});
+
+function setupInstallPrompt() {
+  // Already handled by beforeinstallprompt above
+}
+
+function handleInstall() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      document.getElementById('install-banner').classList.remove('show');
+      showToast('App installed! 🎉');
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+function dismissInstallBanner() {
+  localStorage.setItem('subtrack_install_dismissed', '1');
+  document.getElementById('install-banner').classList.remove('show');
+}
+
+function dismissNotifBanner() {
+  localStorage.setItem('subtrack_notif_dismissed', '1');
+  document.getElementById('notif-banner').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT CSV
+═══════════════════════════════════════════════════════ */
+function exportCSV() {
+  if (!subs.length) { showToast('No subscriptions to export'); return; }
+  const headers = ['Name', 'Category', 'Cost', 'Cycle', 'Next Billing Date', 'Monthly Cost', 'Payment Mode', 'Card/Bank Issuer', 'App Used'];
+  const rows = subs.map(s => [
+    s.name,
+    s.category,
+    s.cost,
+    s.cycle,
+    s.date,
+    monthly(s).toFixed(2),
+    s.payMode,
+    s.payMode === 'Credit Card' ? (s.cardIssuer || '') : (s.bankName || ''),
+    s.payApp || ''
+  ]);
+
+  const csvContent = [headers, ...rows].map(row =>
+    row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+  ).join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `subtrack_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported ✓');
+}
+
+/* ═══════════════════════════════════════════════════════
+   ORIGINAL APP CODE (preserved + enhanced)
+═══════════════════════════════════════════════════════ */
+  const STORE_KEY = 'subtrack_light_v1';
+
+  const CAT_COLOR = {
+    Streaming:    '#FF3B30',
+    Music:        '#34C759',
+    Productivity: '#5856D6',
+    Gaming:       '#FF9500',
+    Cloud:        '#007AFF',
+    Other:        '#FF2D55',
+  };
+
+  function dStr(days) {
+    const d = new Date(); d.setDate(d.getDate() + days);
+    return d.toISOString().split('T')[0];
+  }
+
+  const SEED = [
+    { id:'s1', name:'Netflix',              url:'', cost:649,  cycle:'monthly', date:dStr(4),  category:'Streaming',    payMode:'Credit Card', cardHolder:'User', cardIssuer:'HDFC',  payApp:'Google Pay'  },
+    { id:'s2', name:'Spotify',              url:'', cost:119,  cycle:'monthly', date:dStr(11), category:'Music',        payMode:'Bank',        accountName:'User', bankName:'HDFC Bank', payApp:'Paytm'      },
+    { id:'s3', name:'Adobe Creative Cloud', url:'', cost:4230, cycle:'yearly',  date:dStr(18), category:'Productivity', payMode:'Credit Card', cardHolder:'User', cardIssuer:'ICICI', payApp:'GPay'        },
+    { id:'s4', name:'Amazon Prime',         url:'', cost:1499, cycle:'yearly',  date:dStr(110),category:'Streaming',    payMode:'Bank',        accountName:'User', bankName:'SBI',     payApp:'PhonePe'     },
+    { id:'s5', name:'Disney+',              url:'', cost:299,  cycle:'monthly', date:dStr(25), category:'Streaming',    payMode:'Credit Card', cardHolder:'User', cardIssuer:'Axis',  payApp:'GPay'        },
+    { id:'s6', name:'GitHub Pro',           url:'', cost:400,  cycle:'monthly', date:dStr(7),  category:'Productivity', payMode:'Credit Card', cardHolder:'User', cardIssuer:'HDFC',  payApp:'GPay'        },
+    { id:'s7', name:'Dropbox Plus',         url:'', cost:1199, cycle:'yearly',  date:dStr(60), category:'Cloud',        payMode:'Bank',        accountName:'User', bankName:'ICICI',   payApp:'Paytm'       },
+  ];
+
+  function load() {
+    try { const r=localStorage.getItem(STORE_KEY); if(r) return JSON.parse(r); } catch(e){}
+    return SEED.map(s=>({...s}));
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(subs)); } catch(e){}
+    syncToSW();  // keep SW in sync
+  }
+
+  let subs = load();
+
+  /* ═══ HELPERS ══════════════════════════════════ */
+  const fmtINR   = v => '₹' + Math.round(v).toLocaleString('en-IN');
+  const monthly  = s => s.cycle === 'yearly' ? s.cost / 12 : s.cost;
+  const daysUntil= d => {
+    const t = new Date(); t.setHours(0,0,0,0);
+    return Math.round((new Date(d+'T00:00:00') - t) / 86400000);
+  };
+  const fmtDate  = d => {
+    if(!d) return '—';
+    return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{month:'short',day:'numeric',year:'numeric'});
+  };
+  const initials = n => {
+    const w=n.trim().split(/\s+/);
+    return w.length>=2?(w[0][0]+w[1][0]).toUpperCase():n.slice(0,2).toUpperCase();
+  };
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  /* ═══ TABS ════════════════════════════════════ */
+  document.querySelectorAll('.nav-btn').forEach(btn =>
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+  );
+  function switchTab(tab) {
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+      const on=b.dataset.tab===tab;
+      b.classList.toggle('active',on);
+      b.setAttribute('aria-selected',on);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p=>
+      p.classList.toggle('active', p.id==='panel-'+tab)
+    );
+    render();
+  }
+
+  /* ═══ MODAL ════════════════════════════════════ */
+  const backdrop = document.getElementById('modal-backdrop');
+  const fab      = document.getElementById('fab');
+  const closeBtn = document.getElementById('modal-close-btn');
+  const form     = document.getElementById('add-form');
+  let editingSubId = null;
+
+  fab.addEventListener('click', () => openModal());
+  closeBtn.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', e=>{ if(e.target===backdrop) closeModal(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && backdrop.classList.contains('open')) closeModal(); });
+
+  function openModal(subToEdit = null) {
+    if (subToEdit) {
+      editingSubId = subToEdit.id;
+      document.getElementById('modal-title').textContent = 'Edit Subscription';
+      document.querySelector('.btn-submit').textContent = 'Save Changes';
+      document.getElementById('f-name').value = subToEdit.name;
+      document.getElementById('f-url').value = subToEdit.url || '';
+      document.getElementById('f-cat').value = subToEdit.category || 'Streaming';
+      document.getElementById('f-cost').value = subToEdit.cost;
+      document.getElementById('f-cycle').value = subToEdit.cycle;
+      document.getElementById('f-date').value = subToEdit.date;
+      document.querySelector(`input[name="pay-mode"][value="${subToEdit.payMode}"]`).checked = true;
+      showCond(subToEdit.payMode);
+      document.getElementById('f-ch').value = subToEdit.cardHolder || '';
+      document.getElementById('f-ci').value = subToEdit.cardIssuer || '';
+      document.getElementById('f-an').value = subToEdit.accountName || '';
+      document.getElementById('f-bn').value = subToEdit.bankName || '';
+      document.getElementById('f-app').value = subToEdit.payApp || '';
+    } else {
+      editingSubId = null;
+      document.getElementById('modal-title').textContent = 'New Subscription';
+      document.querySelector('.btn-submit').textContent = 'Add Subscription';
+      form.reset();
+      document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+      showCond('Credit Card');
+    }
+    backdrop.classList.add('open');
+    backdrop.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    setTimeout(()=>document.getElementById('f-name').focus(), 80);
+  }
+
+  function closeModal() {
+    backdrop.classList.remove('open');
+    backdrop.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+    fab.focus();
+  }
+
+  document.getElementById('add-modal').addEventListener('keydown', e=>{
+    if(e.key!=='Tab') return;
+    const els=document.getElementById('add-modal').querySelectorAll('button,input,select,[tabindex]:not([tabindex="-1"])');
+    const first=els[0], last=els[els.length-1];
+    if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+  });
+
+  document.querySelectorAll('input[name="pay-mode"]').forEach(r=>
+    r.addEventListener('change',()=>showCond(r.value))
+  );
+  function showCond(mode) {
+    document.getElementById('cond-card').classList.toggle('show', mode==='Credit Card');
+    document.getElementById('cond-bank').classList.toggle('show', mode==='Bank');
+  }
+
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const name = document.getElementById('f-name').value.trim();
+    const cost = parseFloat(document.getElementById('f-cost').value);
+    const date = document.getElementById('f-date').value;
+    if(!name || isNaN(cost) || cost<0 || !date){ showToast('Please fill required fields'); return; }
+    const mode = document.querySelector('input[name="pay-mode"]:checked').value;
+    const newSubData = {
+      id: editingSubId ? editingSubId : 'sub-'+Date.now(),
+      name, url: document.getElementById('f-url').value.trim(),
+      cost, cycle: document.getElementById('f-cycle').value, date,
+      category: document.getElementById('f-cat').value,
+      payMode: mode,
+      cardHolder:  mode==='Credit Card'?document.getElementById('f-ch').value.trim():'',
+      cardIssuer:  mode==='Credit Card'?document.getElementById('f-ci').value.trim():'',
+      accountName: mode==='Bank'?document.getElementById('f-an').value.trim():'',
+      bankName:    mode==='Bank'?document.getElementById('f-bn').value.trim():'',
+      payApp: document.getElementById('f-app').value.trim(),
+    };
+
+    if (editingSubId) {
+      const idx = subs.findIndex(s => s.id === editingSubId);
+      if (idx !== -1) subs[idx] = newSubData;
+      showToast(name + ' updated ✓');
+    } else {
+      subs.push(newSubData);
+      showToast(name + ' added ✓');
+    }
+    save(); render(); closeModal();
+  });
+
+  /* ═══ TOAST ════════════════════════════════════ */
+  function showToast(msg) {
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(()=>t.classList.remove('show'), 2500);
+  }
+
+  /* ═══ SEARCH + SORT STATE ══════════════════════ */
+  let searchQuery = '';
+  let sortMode = 'date';  // 'date' | 'cost' | 'name' | 'category'
+
+  /* ═══ RENDER ═══════════════════════════════════ */
+  function render() { renderDash(); renderSubsTab(); renderProfile(); }
+
+  /* Dashboard */
+  function renderDash() {
+    const totalMo = subs.reduce((a,s)=>a+monthly(s),0);
+    const totalYr = totalMo*12;
+    document.getElementById('dash-mo-val').textContent = Math.round(totalMo).toLocaleString('en-IN');
+    document.getElementById('dash-yr-val').textContent = fmtINR(totalYr) + ' / year';
+    renderPie(); renderDashRows(); renderUpcoming();
+  }
+
+  function renderPie() {
+    const pie    = document.getElementById('pie-chart');
+    const legend = document.getElementById('pie-legend');
+    const centerText = `
+      <div class="pie-el-content">
+        <div style="font-size:1.45rem;font-weight:700;line-height:1;">${subs.length}</div>
+        <div style="font-size:0.6rem;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-top:2px;">Subs</div>
+      </div>
+    `;
+    if(!subs.length) {
+      pie.style.background='var(--sep-opaque)';
+      pie.innerHTML = centerText;
+      legend.innerHTML='<div style="font-size:.74rem;color:var(--text-3);">Add subscriptions<br>to see breakdown</div>';
+      return;
+    }
+    const groups={};
+    subs.forEach(s=>{ const k=s.category||'Other'; groups[k]=(groups[k]||0)+monthly(s); });
+    const total=Object.values(groups).reduce((a,b)=>a+b,0);
+    let cur=0; const parts=[], segs=[];
+    Object.entries(groups).forEach(([cat,val])=>{
+      const deg=(val/total)*360;
+      const col=CAT_COLOR[cat]||'#999';
+      parts.push(`${col} ${cur.toFixed(1)}deg ${(cur+deg).toFixed(1)}deg`);
+      segs.push({cat,val,col}); cur+=deg;
+    });
+    pie.style.background=`conic-gradient(${parts.join(',')})`;
+    pie.innerHTML = centerText;
+    legend.innerHTML=segs.map(s=>`
+      <div class="leg-row">
+        <span class="leg-dot" style="background:${s.col};"></span>
+        <span class="leg-name">${esc(s.cat)}</span>
+        <span class="leg-amt">${fmtINR(s.val*12)}/yr</span>
+      </div>
+    `).join('');
+  }
+
+  function renderDashRows() {
+    const el=document.getElementById('dash-rows');
+    if(!subs.length){ el.innerHTML=''; return; }
+    el.innerHTML=subs.map((s,i)=>{
+      const col=CAT_COLOR[s.category]||'#999';
+      const price=s.cycle==='monthly'?fmtINR(s.cost)+'/mo':fmtINR(s.cost)+'/yr';
+      return `
+        ${i===0?'<div class="list-sep list-sep--full"></div>':''}
+        <div class="list-row">
+          <div class="list-icon" style="background:${col};" aria-hidden="true">${initials(s.name)}</div>
+          <div class="list-body">
+            <div class="list-name">${esc(s.name)}</div>
+            <div class="list-sub">${s.cycle.charAt(0).toUpperCase()+s.cycle.slice(1)}</div>
+          </div>
+          <div class="list-amt">${price}</div>
+        </div>
+        ${i<subs.length-1?'<div class="list-sep"></div>':''}
+      `;
+    }).join('');
+  }
+
+  function renderUpcoming() {
+    const el=document.getElementById('upcoming-card');
+    const dc=document.getElementById('due-count');
+    const upcoming=subs.map(s=>({...s,days:daysUntil(s.date)}))
+      .filter(s=>s.days>=0&&s.days<=15).sort((a,b)=>a.days-b.days);
+    dc.textContent=upcoming.length?upcoming.length+' due':'';
+    if(!upcoming.length){
+      el.innerHTML='<div class="empty"><div class="empty__icon">🗓️</div><div class="empty__txt">No bills due in the next 15 days</div></div>';
+      return;
+    }
+    el.innerHTML=upcoming.map((s,i)=>{
+      const cls=s.days<=2?'bb-urgent':s.days<=6?'bb-soon':'bb-normal';
+      const lbl=s.days===0?'TODAY':s.days===1?'TMR':'DAYS';
+      return `
+        ${i>0?'<div class="list-sep"></div>':''}
+        <div class="bill-row">
+          <div class="bill-badge ${cls}" aria-label="${s.days} days until billing">
+            <span class="bill-badge__num">${s.days}</span>
+            <span class="bill-badge__lbl">${lbl}</span>
+          </div>
+          <div class="bill-info">
+            <div class="bill-name">${esc(s.name)}</div>
+            <div class="bill-meta">Due ${fmtDate(s.date)}</div>
+          </div>
+          <div class="bill-amt">${fmtINR(s.cost)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ═══ SUBS TAB with search + sort ══════════════ */
+  function renderSubsTab() {
+    // Inject search + sort bar if not present
+    const panel = document.getElementById('panel-subs');
+    if (!document.getElementById('subs-search')) {
+      const searchBar = document.createElement('div');
+      searchBar.innerHTML = `
+        <div id="install-banner" style="margin:12px 16px 0;" role="banner">
+          <div class="ib-text">
+            <div class="ib-title">📱 Install SubTrack</div>
+            <div class="ib-sub">Get background bill reminders even when browser is closed</div>
+          </div>
+          <button class="ib-btn" onclick="handleInstall()">Install</button>
+          <button class="ib-dismiss" onclick="dismissInstallBanner()" aria-label="Dismiss">✕</button>
+        </div>
+        <div id="notif-banner" style="margin:12px 16px 0;" role="banner">
+          <span id="notif-banner-text">🔔 Enable notifications to get bill reminders</span>
+          <button id="notif-banner-allow" onclick="requestNotifPermission()">Allow</button>
+          <button id="notif-banner-dismiss" onclick="dismissNotifBanner()" aria-label="Dismiss">✕</button>
+        </div>
+        <div class="search-wrap" style="margin-top:10px;">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M11 11l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <input class="search-input" id="subs-search" type="search" placeholder="Search subscriptions…" oninput="onSearch(this.value)" aria-label="Search subscriptions" />
+        </div>
+        <div class="sort-bar">
+          <button class="sort-chip active" id="sort-date" onclick="setSort('date')">📅 By Date</button>
+          <button class="sort-chip" id="sort-cost" onclick="setSort('cost')">💰 By Cost</button>
+          <button class="sort-chip" id="sort-name" onclick="setSort('name')">🔤 By Name</button>
+          <button class="sort-chip" id="sort-category" onclick="setSort('category')">🏷️ Category</button>
+        </div>
+      `;
+      panel.querySelector('.page-header').insertAdjacentElement('afterend', searchBar);
+    }
+
+    // Re-check notification/install banners
+    if (typeof checkNotifPermission === 'function') checkNotifPermission();
+
+    const el = document.getElementById('subs-list');
+    let filtered = subs.filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery) || (s.category||'').toLowerCase().includes(searchQuery));
+
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortMode === 'date')     return daysUntil(a.date) - daysUntil(b.date);
+      if (sortMode === 'cost')     return monthly(b) - monthly(a);
+      if (sortMode === 'name')     return a.name.localeCompare(b.name);
+      if (sortMode === 'category') return (a.category||'').localeCompare(b.category||'');
+      return 0;
+    });
+
+    if (!sorted.length) {
+      el.innerHTML = searchQuery
+        ? '<div class="empty" style="padding:48px 16px;"><div class="empty__icon">🔍</div><div class="empty__txt">No subscriptions match your search.</div></div>'
+        : '<div class="empty" style="padding:48px 16px;"><div class="empty__icon">📦</div><div class="empty__txt">No subscriptions yet.<br>Tap + to add one.</div></div>';
+      return;
+    }
+
+    el.innerHTML = sorted.map(s => {
+      const col = CAT_COLOR[s.category] || '#999';
+      const price = fmtINR(s.cost);
+      const period = s.cycle === 'monthly' ? '/month' : '/year';
+      const payDetail = s.payMode === 'Credit Card'
+        ? (s.cardIssuer ? s.cardIssuer+' Card' : 'Credit Card')
+        : (s.bankName ? s.bankName+' Bank' : 'Bank');
+      const days = daysUntil(s.date);
+      const dayColor = days <= 3 ? 'color:var(--danger)' : days <= 7 ? 'color:var(--orange)' : 'color:var(--text-2)';
+      const dayBadge = days === 0 ? '🔴 TODAY' : days === 1 ? '🟠 Tomorrow' : `Due in ${days}d`;
+      return `
+      <article class="sub-card" aria-label="${esc(s.name)} subscription">
+        <div class="sc-top">
+          <div class="sc-icon" style="background:${col};" aria-hidden="true">${initials(s.name)}</div>
+          <div class="sc-info">
+            <div class="sc-name">${esc(s.name)}</div>
+            <div class="sc-cycle">${s.category} · ${s.cycle.charAt(0).toUpperCase()+s.cycle.slice(1)}</div>
+          </div>
+          <div class="sc-price">
+            <div class="sc-price__amt">${price}</div>
+            <div class="sc-price__period">${period}</div>
+          </div>
+        </div>
+        <div class="sc-meta">
+          <div class="sc-meta-item">
+            <svg class="sc-meta-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x=".75" y="1.5" width="10.5" height="9.75" rx="1.25" stroke="currentColor" stroke-width="1.1"/><path d=".75 4.5h10.5M3.75.75v1.5M8.25.75v1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            <span class="sc-meta-txt">${fmtDate(s.date)}</span>
+          </div>
+          <div class="sc-meta-item">
+            <svg class="sc-meta-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="5.25" stroke="currentColor" stroke-width="1.1"/><path d="M6 3.5v2.75l1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            <span class="sc-meta-txt">${s.cycle.charAt(0).toUpperCase()+s.cycle.slice(1)}</span>
+          </div>
+          <div class="sc-meta-item">
+            <svg class="sc-meta-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x=".75" y="2.25" width="10.5" height="7.5" rx="1.25" stroke="currentColor" stroke-width="1.1"/><path d=".75 5h10.5" stroke="currentColor" stroke-width="1.1"/></svg>
+            <span class="sc-meta-txt">${esc(payDetail)}</span>
+          </div>
+          <div class="sc-meta-item">
+            <svg class="sc-meta-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3" y=".75" width="6" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="9.25" r=".55" fill="currentColor"/></svg>
+            <span class="sc-meta-txt">${esc(s.payApp||'—')}</span>
+          </div>
+        </div>
+        <div class="sc-footer">
+          <span style="font-size:.7rem;${dayColor};margin-right:auto;">${dayBadge}</span>
+          <button class="btn-delete" data-id="${s.id}" aria-label="Delete ${esc(s.name)}">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Delete
+          </button>
+          <button class="btn-edit" data-id="${s.id}" aria-label="Edit ${esc(s.name)}">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M7 1.5a1.414 1.414 0 012 2L2 10H0V8L7 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Edit
+          </button>
+        </div>
+      </article>
+      `;
+    }).join('');
+
+    el.querySelectorAll('.btn-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = subs.find(x => x.id === btn.dataset.id);
+        if (s) openModal(s);
+      });
+    });
+
+    el.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = subs.find(x => x.id === btn.dataset.id);
+        if (!s) return;
+        openConfirm({
+          icon: '🗑️',
+          title: `Delete "${s.name}"?`,
+          msg: `This will permanently remove ${s.name} from your subscriptions.`,
+          btnText: 'Delete',
+          btnClass: 'danger',
+          onConfirm: () => {
+            subs = subs.filter(x => x.id !== s.id);
+            save();
+            render();
+            showToast(s.name + ' deleted');
+          }
+        });
+      });
+    });
+  }
+
+  function onSearch(q) {
+    searchQuery = q.toLowerCase().trim();
+    renderSubsTab();
+  }
+
+  function setSort(mode) {
+    sortMode = mode;
+    document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
+    const chip = document.getElementById('sort-' + mode);
+    if (chip) chip.classList.add('active');
+    renderSubsTab();
+  }
+
+  /* Profile */
+  function renderProfile() {
+    const mo=subs.reduce((a,s)=>a+monthly(s),0);
+    document.getElementById('p-count').textContent=subs.length;
+    document.getElementById('p-mo').textContent=fmtINR(mo);
+    document.getElementById('p-yr').textContent=fmtINR(mo*12);
+  }
+
+  /* ═══ INIT ═════════════════════════════════════ */
+  // App is initialized via initApp() called from auth system
+  // No render() here — called after login
+
+</script>
+</body>
+</html>
